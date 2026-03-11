@@ -197,7 +197,7 @@ public class ChessMatch {
 		// Special Move - EnPassant
 		if (p instanceof Pawn) {
 			if (source.getColumn() != target.getColumn() && capturedPiece == enPassantVulnerable) {
-				ChessPiece pawn = (ChessPiece)board.removePiece(target);
+				ChessPiece pawn = (ChessPiece) board.removePiece(target);
 				Position pawnPosition;
 				if (p.getColor() == Color.WHITE) {
 					pawnPosition = new Position(3, target.getColumn());
@@ -245,28 +245,79 @@ public class ChessMatch {
 
 			// Pawn specific attack
 			if (p instanceof Pawn) {
-
 				Position pawnPos = ((ChessPiece) p).getChessPosition().toPosition();
-
 				int direction = (((ChessPiece) p).getColor() == Color.WHITE) ? -1 : 1;
-
 				Position leftAttack = new Position(pawnPos.getRow() + direction, pawnPos.getColumn() - 1);
 				Position rightAttack = new Position(pawnPos.getRow() + direction, pawnPos.getColumn() + 1);
-
 				if (position.getRow() == leftAttack.getRow() && position.getColumn() == leftAttack.getColumn()) {
 					return true;
 				}
-
 				if (position.getRow() == rightAttack.getRow() && position.getColumn() == rightAttack.getColumn()) {
 					return true;
 				}
-
 				continue;
 			}
+
+			// Tower x-ray attack
+			if (p instanceof Rook) {
+				Position pos = ((ChessPiece) p).getChessPosition().toPosition();
+				if (rayAttack(pos, position, 1, 0) || rayAttack(pos, position, -1, 0) || rayAttack(pos, position, 0, 1)
+						|| rayAttack(pos, position, 0, -1)) {
+					return true;
+				}
+				continue;
+			}
+
+			// Bishop x-ray attack
+			if (p instanceof Bishop) {
+				Position pos = ((ChessPiece) p).getChessPosition().toPosition();
+				if (rayAttack(pos, position, 1, 1) || rayAttack(pos, position, 1, -1) || rayAttack(pos, position, -1, 1)
+						|| rayAttack(pos, position, -1, -1)) {
+					return true;
+				}
+				continue;
+			}
+			
+			//Queen x-ray attack
+			if (p instanceof Queen) {
+			    Position pos = ((ChessPiece) p).getChessPosition().toPosition();
+			    if (rayAttack(pos, position, 1, 0) ||
+			        rayAttack(pos, position, -1, 0) ||
+			        rayAttack(pos, position, 0, 1) ||
+			        rayAttack(pos, position, 0, -1) ||
+			        rayAttack(pos, position, 1, 1) ||
+			        rayAttack(pos, position, 1, -1) ||
+			        rayAttack(pos, position, -1, 1) ||
+			        rayAttack(pos, position, -1, -1)) {
+			        return true;
+			    }
+			    continue;
+			}
+			
 			boolean[][] mat = p.possibleMoves();
 			if (mat[position.getRow()][position.getColumn()]) {
 				return true;
 			}
+		}
+		return false;
+	}
+
+	// Attack logic ignoring king
+	private boolean rayAttack(Position from, Position target, int rowDir, int colDir) {
+
+		int r = from.getRow() + rowDir;
+		int c = from.getColumn() + colDir;
+
+		while (board.positionExists(new Position(r, c))) {
+			if (r == target.getRow() && c == target.getColumn()) {
+				return true;
+			}
+			Piece piece = board.piece(r, c);
+			if (piece != null && !(piece instanceof King)) {
+				break;
+			}
+			r += rowDir;
+			c += colDir;
 		}
 		return false;
 	}
